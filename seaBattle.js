@@ -171,7 +171,6 @@ class Ship {
 
                 const oldX = ship.closest(".battle-content").getAttribute("data-x")
                 const oldY = ship.closest(".battle-content").getAttribute("data-y")
-                console.log(oldX, oldY)
                 this.switchBusyEmptyFields(ship, oldX, oldY)
 
             })
@@ -204,34 +203,35 @@ class Ship {
     switchBusyEmptyFields(ship, oldX, oldY) {
         const x = Number(ship.parentElement.getAttribute("data-x"));
         const y = Number(ship.parentElement.getAttribute("data-y"));
+        const currentPosition = document.querySelector(`[data-x="${x}"][data-y="${y}"]`)
         let lengthShip = Number(ship.getAttribute("data-length"))
-
         const vertical = ship.getAttribute("position");
-        console.log(vertical)
-        switch (vertical) {
-            case "h": {
 
+        const cellBusy = "battlefield-cell-busy"
+        const cellEmpty = "battlefield-cell-empty"
+        const cell = "battlefield-cell"
+
+        switch (vertical) {
+
+            case "h": {
                 lengthShip += x
                 for (let i = x; i < lengthShip; i++) {
-
                     const busyElem = document.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
-                    // console.log("busyelem", busyElem)
+                    //correct
 
-                    if (busyElem.closest('.battlefield-cell-empty')) {
-                        busyElem.closest('.battlefield-cell-empty').classList.replace('battlefield-cell-empty', 'battlefield-cell-busy')
+
+                    if (busyElem.closest(`[class^="${cell}"]`)) {
+                        busyElem.closest(`.${cell}`).classList.replace(`${cellEmpty}`, `${cellBusy}`)
                     }
                 }
 
                 if (oldX && oldY !== "") {
-                    const oldLength = Number(ship.getAttribute("data-length")) + Number(oldX)
-                    for (let i = +oldX; i < oldLength; i++) {
+                    const oldLength = Number(ship.getAttribute("data-length")) + Number(oldY)
+                    for (let i = +oldY; i < oldLength; i++) {
+                        const oldElem = document.querySelector(`[data-x="${+oldX}"][data-y="${[i]}"]`)
 
-                        const oldElem = document.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
-                        // console.log("oldelem", oldElem)
-                        // console.log(oldX,oldY)
-
-                        if (oldElem.closest('.battlefield-cell-busy')) {
-                            oldElem.closest('.battlefield-cell-busy').classList.replace('battlefield-cell-busy', 'battlefield-cell-empty')
+                        if (oldElem.closest(`.${cellBusy}`)) {
+                            oldElem.closest(`.${cellBusy}`).classList.replace(`${cellBusy}`, `${cellEmpty}`)
                         }
                     }
                 }
@@ -241,25 +241,23 @@ class Ship {
             case "v": {
                 lengthShip += y
                 for (let i = y; i < lengthShip; i++) {
-
                     const busyElem = document.querySelector(`[data-x="${x}"][data-y="${[i]}"]`)
-                    // console.log("busyelem", busyElem)
-                    if (busyElem.closest('.battlefield-cell-empty')) {
+                    //correct
 
-                        busyElem.closest('.battlefield-cell-empty').classList.replace('battlefield-cell-empty', 'battlefield-cell-busy')
+
+                    if (busyElem.closest(`[class^="${cellEmpty}"]`)) {
+                        busyElem.closest(`.${cellEmpty}`).classList.replace(`${cellEmpty}`, `${cellBusy}`)
                     }
                 }
 
                 if (oldX && oldY !== "") {
+                    const oldLength = Number(ship.getAttribute("data-length")) + Number(oldX)
+                    for (let i = +oldX; i < oldLength; i++) {
+                        const oldElem = document.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
 
-                    const oldLength = Number(ship.getAttribute("data-length")) + Number(oldY)
-                    for (let i = +oldY; i < oldLength; i++) {
-                        const oldElem = document.querySelector(`[data-x="${+oldX}"][data-y="${i}"]`)
+                        if (oldElem.closest(`.${cellBusy}`)) {
 
-                        // console.log("oldelem", oldElem)
-                        // console.log("oldX,oldY", oldX,oldY)
-                        if (oldElem.closest('.battlefield-cell-busy')) {
-                            oldElem.closest('.battlefield-cell-busy').classList.replace('battlefield-cell-busy', 'battlefield-cell-empty')
+                            oldElem.closest(`.${cellBusy}`).classList.replace(`${cellBusy}`, `${cellEmpty}`)
                         }
                     }
                 }
@@ -412,5 +410,54 @@ appendShips.moveShip()
 //                 }
 //
 //
+//             }
+//         }
+
+//  switch (vertical) {
+//
+//             case "h": {
+//                 lengthShip += x
+//                 for (let i = x; i < lengthShip; i++) {
+//                     const busyElem = document.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
+//
+//                     if (busyElem.closest('.battlefield-cell-empty')) {
+//                         busyElem.closest('.battlefield-cell-empty').classList.replace('battlefield-cell-empty', 'battlefield-cell-busy')
+//                     }
+//                 }
+//
+//                 if (oldX && oldY !== "") {
+//                     const oldLength = Number(ship.getAttribute("data-length")) + Number(oldY)
+//                     for (let i = +oldY; i < oldLength; i++) {
+//                         const oldElem = document.querySelector(`[data-x="${+oldX}"][data-y="${[i]}"]`)
+//
+//                         if (oldElem.closest('.battlefield-cell-busy') && !oldElem.closest('.battlefield-cell-busy').contains(currentPosition)) {
+//                             oldElem.closest('.battlefield-cell-busy').classList.replace('battlefield-cell-busy', 'battlefield-cell-empty')
+//                         }
+//                     }
+//                 }
+//                 break
+//             }
+//
+//             case "v": {
+//                 lengthShip += y
+//                 for (let i = y; i < lengthShip; i++) {
+//                     const busyElem = document.querySelector(`[data-x="${x}"][data-y="${[i]}"]`)
+//
+//                     if (busyElem.closest('.battlefield-cell-empty')) {
+//                         busyElem.closest('.battlefield-cell-empty').classList.replace('battlefield-cell-empty', 'battlefield-cell-busy')
+//                     }
+//                 }
+//
+//                 if (oldX && oldY !== "") {
+//                     const oldLength = Number(ship.getAttribute("data-length")) + Number(oldX)
+//                     for (let i = +oldX; i < oldLength; i++) {
+//                         const oldElem = document.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
+//
+//                         if (oldElem.closest('.battlefield-cell-busy')  && !oldElem.closest('.battlefield-cell-busy').contains(currentPosition)) {
+//                             console.log(oldElem.closest('.battlefield-cell-busy'))
+//                             oldElem.closest('.battlefield-cell-busy').classList.replace('battlefield-cell-busy', 'battlefield-cell-empty')
+//                         }
+//                     }
+//                 }
 //             }
 //         }
