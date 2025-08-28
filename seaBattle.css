@@ -25,8 +25,6 @@ h1 {
 }
 
 
-
-
 /*..........table elems.........*/
 table {
     border-collapse: collapse;
@@ -35,7 +33,6 @@ table {
     table-layout: fixed;
 }
 
-
 td {
     border: 1px solid #4644a6;
     width: 50px;
@@ -43,13 +40,8 @@ td {
     text-align: center;
     vertical-align: middle;
     padding: 0;
-    /*position: relative;*/
     position: relative;
-
-
-    /*background-color: #A2AADB;*/
 }
-
 
 th {
     border: none;
@@ -67,7 +59,6 @@ th {
     align-items: center;
 }
 
-
 .field {
     margin: 0 20px;
 }
@@ -84,17 +75,15 @@ th {
 
 
 .ship-box-draggable {
-    border: 2px solid #898AC4;
-    background-color: #C0C9EE;
+    border: 2px solid #00f;
+    background-color: rgba(0,0,255,.05);
     opacity: 70%;
     z-index: 100;
     position: absolute;
     top: 0;
     left: 0;
     cursor: move;
-
-
-
+    user-select: none;
 
 }
 
@@ -115,23 +104,8 @@ th {
     display: flex;
     align-items: center;
 }
-/*[position="h"] {*/
 
-
-/*}*/
-/*[position="v"] {*/
-/*    transform: rotate(90deg);*/
-/*}*/
 .z {
-    position: absolute;
-    opacity: 0;
-
-
+    /*position: absolute;*/
+    /*opacity: 0;*/
 }
-
-
-.hint {
-    position: absolute; width: 80px; height: 80px; border: 2px dashed rgba(0,0,0,.35);
-    border-radius: 10px; pointer-events: none; opacity: 0; transition: opacity .1s;
-}
-.hint.visible { opacity: 1; }

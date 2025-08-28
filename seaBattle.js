@@ -54,7 +54,7 @@ class TableField {
 
                 this.span = document.createElement("span");
                 this.span.classList.add('z');
-                this.span.textContent = " "
+
                 // this.span.setAttribute("draggable", "true");
 
 
@@ -93,6 +93,8 @@ class Ship {
             divShip.setAttribute("draggable", "true")
             divShip.setAttribute("data-id", this.generateShipId())
             divShip.setAttribute("position", this.setRandomVertical(divShip))
+            divShip.style.left = "20px";
+            divShip.style.top = "20px";
             this.setPositionShip(divShip);
 
             ships.push(divShip);
@@ -106,8 +108,7 @@ class Ship {
     }
 
     setRandomVertical(ship) {
-        const vertical = Math.random() < 0.5 ? "h" : "v";
-        return vertical
+        return Math.random() < 0.5 ? "h" : "v";
     }
 
     setPositionShip(ship) {
@@ -119,18 +120,17 @@ class Ship {
         switch (vertical) {
 
             case "h":
-                ship.style.width = ((shipWidth * lengthShip) - 4) + 'px'
-                ship.style.height = (shipHeight - 4) + 'px'
+                ship.style.width = ((shipWidth * lengthShip) - 2) + 'px'
+                ship.style.height = (shipHeight - 2) + 'px'
                 break;
 
             case "v":
-                ship.style.height = ((shipHeight * lengthShip) - 4) + 'px'
-                ship.style.width = (shipWidth - 4) + 'px'
+                ship.style.height = ((shipHeight * lengthShip) - 2) + 'px'
+                ship.style.width = (shipWidth - 2) + 'px'
 
         }
         return vertical
     }
-
 
     checkPositionShip(ship) {
 
@@ -146,14 +146,16 @@ class Ship {
         const ships = document.querySelectorAll('.ship-box-draggable');
         const dropZones = document.querySelectorAll('.battle-content');
 
+        const cellSize = 50;
+        let dragged = null;
+        let grabOffsetY = 0;
+        let grabOffsetX = 0;
 
+
+        //...............drag..and..drop................................
         ships.forEach(ship => {
             ship.addEventListener("dragstart", (e) => {
-                e.dataTransfer.effectAllowed = "move";
                 ship.classList.add('draggable')
-
-
-
 
                 if (e.target.closest(".battle-content")) {
                     e.dataTransfer.setData("data-x", e.target.closest(".battle-content").getAttribute("data-x"));
@@ -161,53 +163,133 @@ class Ship {
                 }
 
 
+                //test....................................
+                dragged = ship;
+                const rect = ship.getBoundingClientRect();
+
+                grabOffsetY = e.clientY - rect.top;
+                grabOffsetX = e.clientX - rect.left;
+
+                console.log("bb", e.clientX, e.clientY);
+
+                e.dataTransfer.setDragImage(ship, grabOffsetX, grabOffsetY);
+                setTimeout(() => ship.style.visibility = "hidden", 0);
+
             })
 
             ship.addEventListener("dragend", (e) => {
                 ship.classList.remove('draggable')
+
+                dragged = null;
+                ship.style.visibility = "visible";
             })
+
 
             ship.addEventListener("click", (e) => {
                 const oldX = ship.closest(".battle-content").getAttribute("data-x")
                 const oldY = ship.closest(".battle-content").getAttribute("data-y")
-
                 this.getOldElems(ship, oldX, oldY, e.target.getAttribute("position"));
 
                 this.checkPositionShip(ship)
                 this.setPositionShip(ship)
 
                 this.getBusyElems(e.target)
+
             })
         })
 
 
-        dropZones.forEach((dropZone) => {
+        dropZones.forEach((dropZone, colIndex) => {
+
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault()
+
                 const draggable = document.querySelector(".draggable")
-                e.dataTransfer.dropEffect = "move";
                 dropZone.appendChild(draggable)
 
+            })
 
+            dropZone.addEventListener("click", (e) => {
+                console.log(dropZone.getBoundingClientRect())
 
             })
 
             dropZone.addEventListener("drop", (e) => {
                 e.preventDefault()
-                // console.log(e.target) //ship
-                // console.log(e.currentTarget) //content where drop
-
                 const oldX = e.dataTransfer.getData("data-x")
                 const oldY = e.dataTransfer.getData("data-y")
 
-                this.getOldElems(e.target, oldX, oldY, e.target.getAttribute("position"));
-                this.getBusyElems(e.target)
+                // this.getOldElems(e.target, oldX, oldY, e.target.getAttribute("position"));
+                this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"));
+
+                // this.getBusyElems(e.target)
+                this.getBusyElems(dragged)
 
 
+                //tedt................................................
+                if (!dragged) return;
+
+                const mouseCol = colIndex;
+                const row = dropZone
+                const rowX = Number(row.getAttribute("data-x"));
+                const rowY = Number(row.getAttribute("data-y"));
+
+                switch (dragged.getAttribute("position")) {
+                    case "h":
+                        const grabOffsetColsX = Math.floor(grabOffsetX / cellSize);
+                        console.log("grabOffsetCols", grabOffsetColsX)
+                        const diffHorizontal = rowX - grabOffsetColsX
+
+                        const leftestElem = document.querySelector(`[data-x="${[diffHorizontal]}"][data-y="${rowY}"]`)
+                        console.log("leftestElem", leftestElem)
+                        leftestElem.appendChild(dragged)
+                        break
+                    case "v":
+                        const grabOffsetColsY = Math.floor(grabOffsetY / cellSize);
+                        console.log("grabOffsetColsY", grabOffsetColsY)
+                        const diffVertical = rowY - grabOffsetColsY
+
+                        const hightestElem = document.querySelector(`[data-x="${[rowX]}"][data-y="${diffVertical}"]`)
+                        hightestElem.appendChild(dragged)
+
+                }
+
+                console.log("rowX", rowX)
+                console.log("rowY", rowY)
+                console.log("row", row)
+
+                const rect = dropZone.getBoundingClientRect();
+
+                dragged.style.position = "absolute";
+                dragged.style.left = (rect.left - rect.left) + "px";
+                dragged.style.top = "0px";
+                dragged.style.visibility = "visible";
+                dragged = null;
+
+                // if (!dragged) return;
+                //
+                // const rect = dropZone.getBoundingClientRect();
+                //
+                //
+                //
+                // let x = e.clientX - rect.left - grabOffsetX;
+                // let y = e.clientY - rect.top - grabOffsetY;
+                //
+                // let snapY = Math.round(y  / cellSize) * cellSize;
+                // let snapX = Math.round(x  / cellSize) * cellSize;
+                //
+                // dropZone.appendChild(dragged);
+                // dragged.style.position = "absolute";
+                //
+                // dragged.style.left = snapX + "px";
+                //
+                // dragged.style.top = snapY + "px";
+                //
+                // dragged.style.visibility = "visible";
+                // dragged = null;
             })
         })
     }
-
 
 
     getBusyElems(ship) {
@@ -219,26 +301,26 @@ class Ship {
 
         switch (vertical) {
             case "h": {
+
                 lengthShip += x
+
                 for (let i = x; i < lengthShip; i++) {
                     const busyElem = document.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
-
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
                 }
             }
                 break
             case "v": {
+
                 lengthShip += y
+
                 for (let i = y; i < lengthShip; i++) {
                     const busyElem = document.querySelector(`[data-x="${x}"][data-y="${[i]}"]`)
-
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
-
                 }
             }
-
         }
         return ship
     }
@@ -264,6 +346,7 @@ class Ship {
                 }
             }
                 break
+
             case "v": {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldY)
                 for (let i = +oldY; i < oldLength; i++) {
@@ -277,6 +360,8 @@ class Ship {
             }
         }
     }
+
+
 }
 
 
