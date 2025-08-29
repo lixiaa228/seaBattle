@@ -170,8 +170,6 @@ class Ship {
                 grabOffsetY = e.clientY - rect.top;
                 grabOffsetX = e.clientX - rect.left;
 
-                console.log("bb", e.clientX, e.clientY);
-
                 e.dataTransfer.setDragImage(ship, grabOffsetX, grabOffsetY);
                 setTimeout(() => ship.style.visibility = "hidden", 0);
 
@@ -207,6 +205,8 @@ class Ship {
                 const draggable = document.querySelector(".draggable")
                 dropZone.appendChild(draggable)
 
+                this.canMove(dragged, dropZone,grabOffsetX, grabOffsetY, cellSize )
+                console.log(dropZone)
             })
 
             dropZone.addEventListener("click", (e) => {
@@ -219,74 +219,10 @@ class Ship {
                 const oldX = e.dataTransfer.getData("data-x")
                 const oldY = e.dataTransfer.getData("data-y")
 
-                // this.getOldElems(e.target, oldX, oldY, e.target.getAttribute("position"));
                 this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"));
 
-                // this.getBusyElems(e.target)
-                this.getBusyElems(dragged)
+                this.grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY, cellSize)
 
-
-                //tedt................................................
-                if (!dragged) return;
-
-                const mouseCol = colIndex;
-                const row = dropZone
-                const rowX = Number(row.getAttribute("data-x"));
-                const rowY = Number(row.getAttribute("data-y"));
-
-                switch (dragged.getAttribute("position")) {
-                    case "h":
-                        const grabOffsetColsX = Math.floor(grabOffsetX / cellSize);
-                        console.log("grabOffsetCols", grabOffsetColsX)
-                        const diffHorizontal = rowX - grabOffsetColsX
-
-                        const leftestElem = document.querySelector(`[data-x="${[diffHorizontal]}"][data-y="${rowY}"]`)
-                        console.log("leftestElem", leftestElem)
-                        leftestElem.appendChild(dragged)
-                        break
-                    case "v":
-                        const grabOffsetColsY = Math.floor(grabOffsetY / cellSize);
-                        console.log("grabOffsetColsY", grabOffsetColsY)
-                        const diffVertical = rowY - grabOffsetColsY
-
-                        const hightestElem = document.querySelector(`[data-x="${[rowX]}"][data-y="${diffVertical}"]`)
-                        hightestElem.appendChild(dragged)
-
-                }
-
-                console.log("rowX", rowX)
-                console.log("rowY", rowY)
-                console.log("row", row)
-
-                const rect = dropZone.getBoundingClientRect();
-
-                dragged.style.position = "absolute";
-                dragged.style.left = (rect.left - rect.left) + "px";
-                dragged.style.top = "0px";
-                dragged.style.visibility = "visible";
-                dragged = null;
-
-                // if (!dragged) return;
-                //
-                // const rect = dropZone.getBoundingClientRect();
-                //
-                //
-                //
-                // let x = e.clientX - rect.left - grabOffsetX;
-                // let y = e.clientY - rect.top - grabOffsetY;
-                //
-                // let snapY = Math.round(y  / cellSize) * cellSize;
-                // let snapX = Math.round(x  / cellSize) * cellSize;
-                //
-                // dropZone.appendChild(dragged);
-                // dragged.style.position = "absolute";
-                //
-                // dragged.style.left = snapX + "px";
-                //
-                // dragged.style.top = snapY + "px";
-                //
-                // dragged.style.visibility = "visible";
-                // dragged = null;
             })
         })
     }
@@ -361,7 +297,64 @@ class Ship {
         }
     }
 
+    grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY, cellSize) {
+        if (!dragged) return;
 
+        const mouseCol = colIndex;
+        const row = dropZone;
+        const rowX = Number(row.getAttribute("data-x"));
+        const rowY = Number(row.getAttribute("data-y"));
+
+        switch (dragged.getAttribute("position")) {
+            case "h": {
+                const grabOffsetColsX = Math.floor(grabOffsetX / cellSize);
+                const diffHorizontal = rowX - grabOffsetColsX;
+                const leftestElem = document.querySelector(
+                    `[data-x="${diffHorizontal}"][data-y="${rowY}"]`
+                );
+                leftestElem.appendChild(dragged);
+                break;
+            }
+            case "v": {
+                const grabOffsetColsY = Math.floor(grabOffsetY / cellSize);
+                const diffVertical = rowY - grabOffsetColsY;
+                const hightestElem = document.querySelector(
+                    `[data-x="${rowX}"][data-y="${diffVertical}"]`
+                );
+                hightestElem.appendChild(dragged);
+                break;
+            }
+        }
+
+        this.getBusyElems(dragged);
+
+        const rect = dropZone.getBoundingClientRect();
+
+        dragged.style.position = "absolute";
+        dragged.style.left = (rect.left - rect.left) + "px";
+        dragged.style.top = "0px";
+        dragged.style.visibility = "visible";
+
+        return null;
+    }
+
+
+    canMove(ship, dropZone, grabOffsetX, grabOffsetY, cellSize) {
+        const lengthShip = ship.getAttribute("data-length");
+        const position = ship.getAttribute("position");
+        const row = dropZone;
+        const rowX = Number(row.getAttribute("data-x"));
+        const rowY = Number(row.getAttribute("data-y"));
+        switch (position) {
+            case "h":
+                const grabOffsetColsX = Math.floor(grabOffsetX / cellSize) + 1;
+                const diffHorizontal = rowX - grabOffsetColsX;
+                console.log(grabOffsetColsX)
+                break
+            case "v":
+
+        }
+    }
 }
 
 
