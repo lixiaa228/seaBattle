@@ -146,7 +146,7 @@ class Ship {
         const ships = document.querySelectorAll('.ship-box-draggable');
         const dropZones = document.querySelectorAll('.battle-content');
 
-        const cellSize = 50;
+        this.cellSize = 50;
         let dragged = null;
         let grabOffsetY = 0;
         let grabOffsetX = 0;
@@ -202,11 +202,15 @@ class Ship {
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault()
 
-                const draggable = document.querySelector(".draggable")
-                dropZone.appendChild(draggable)
+                const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
 
-                this.canMove(dragged, dropZone,grabOffsetX, grabOffsetY, cellSize )
-                console.log(dropZone)
+                // if (checkAllow) {
+                //     dragged.classList.remove("draggable")
+                // } else {
+                //     dragged.classList.add('draggable')
+                // }
+
+
             })
 
             dropZone.addEventListener("click", (e) => {
@@ -218,10 +222,24 @@ class Ship {
                 e.preventDefault()
                 const oldX = e.dataTransfer.getData("data-x")
                 const oldY = e.dataTransfer.getData("data-y")
+                dragged.classList.remove("draggable")
 
-                this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"));
 
-                this.grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY, cellSize)
+                const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
+                const whereReturn = this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"))
+                console.log("whereReturn", whereReturn)
+                if (checkAllow) {
+                    console.log("drop banned")
+                    const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips')
+                    target.appendChild(dragged)
+                } else {
+                    console.log("whereReturn", whereReturn)
+                    console.log("can drop")
+                    console.log(this.grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY), "grab")
+                }
+
+                dragged = null
+
 
             })
         })
@@ -239,9 +257,9 @@ class Ship {
             case "h": {
 
                 lengthShip += x
-
                 for (let i = x; i < lengthShip; i++) {
                     const busyElem = document.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
+                    console.log("busyElem", busyElem);
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
                 }
@@ -250,7 +268,6 @@ class Ship {
             case "v": {
 
                 lengthShip += y
-
                 for (let i = y; i < lengthShip; i++) {
                     const busyElem = document.querySelector(`[data-x="${x}"][data-y="${[i]}"]`)
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
@@ -269,19 +286,21 @@ class Ship {
         const currentPosition = document.querySelector(`[data-x="${x}"][data-y="${y}"]`)
         const cell = "battlefield-cell"
 
+        let returnOldElems = []
         switch (vertical) {
             case "h": {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldX)
                 for (let i = +oldX; i < oldLength; i++) {
                     const oldElem = document.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
-
+                    console.log("oldElem", oldElem)
                     if (oldElem !== currentPosition) {
                         oldElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-busy')
                         oldElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-empty')
                     }
+                    returnOldElems.push(oldElem)
                 }
+                return returnOldElems;
             }
-                break
 
             case "v": {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldY)
@@ -292,12 +311,14 @@ class Ship {
                         oldElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-busy')
                         oldElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-empty')
                     }
+                    returnOldElems.push(oldElem)
                 }
+                return returnOldElems;
             }
         }
     }
 
-    grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY, cellSize) {
+    grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY) {
         if (!dragged) return;
 
         const mouseCol = colIndex;
@@ -307,7 +328,7 @@ class Ship {
 
         switch (dragged.getAttribute("position")) {
             case "h": {
-                const grabOffsetColsX = Math.floor(grabOffsetX / cellSize);
+                const grabOffsetColsX = Math.floor(grabOffsetX / this.cellSize);
                 const diffHorizontal = rowX - grabOffsetColsX;
                 const leftestElem = document.querySelector(
                     `[data-x="${diffHorizontal}"][data-y="${rowY}"]`
@@ -316,7 +337,7 @@ class Ship {
                 break;
             }
             case "v": {
-                const grabOffsetColsY = Math.floor(grabOffsetY / cellSize);
+                const grabOffsetColsY = Math.floor(grabOffsetY / this.cellSize);
                 const diffVertical = rowY - grabOffsetColsY;
                 const hightestElem = document.querySelector(
                     `[data-x="${rowX}"][data-y="${diffVertical}"]`
@@ -339,19 +360,33 @@ class Ship {
     }
 
 
-    canMove(ship, dropZone, grabOffsetX, grabOffsetY, cellSize) {
-        const lengthShip = ship.getAttribute("data-length");
+    getAcessAppend(ship, dropZone, grabOffsetX, grabOffsetY, cellSize) {
+        const lengthShip = Number(ship.getAttribute("data-length"));
         const position = ship.getAttribute("position");
-        const row = dropZone;
-        const rowX = Number(row.getAttribute("data-x"));
-        const rowY = Number(row.getAttribute("data-y"));
+        const rowX = Number(dropZone.getAttribute("data-x"));
+        const rowY = Number(dropZone.getAttribute("data-y"));
         switch (position) {
-            case "h":
-                const grabOffsetColsX = Math.floor(grabOffsetX / cellSize) + 1;
-                const diffHorizontal = rowX - grabOffsetColsX;
-                console.log(grabOffsetColsX)
-                break
-            case "v":
+            case "h": {
+                const grabOffsetColsX = Math.floor(grabOffsetX / this.cellSize) + 1;
+                const acessCell = lengthShip - grabOffsetColsX
+
+                if ((acessCell + rowX) > 9) {
+                    return true
+                } else {
+                    return false
+                }
+
+            }
+
+            case "v": {
+                const grabOffsetColsY = Math.floor(grabOffsetY / this.cellSize) + 1;
+                const acessCell = lengthShip - grabOffsetColsY
+                if ((acessCell + rowY) > 9) {
+                    return true
+                } else {
+                    return false
+                }
+            }
 
         }
     }

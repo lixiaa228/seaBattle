@@ -52,8 +52,6 @@ th {
 }
 
 
-
-
 .fields {
     display: flex;
     align-items: center;
@@ -76,7 +74,7 @@ th {
 
 .ship-box-draggable {
     border: 2px solid #00f;
-    background-color: rgba(0,0,255,.05);
+    background-color: rgba(0, 0, 255, .05);
     opacity: 70%;
     z-index: 100;
     position: absolute;
@@ -92,8 +90,13 @@ th {
     border: 2px solid #09ee40;
     cursor: move;
 
-
 }
+
+.notDraggable {
+    border: 2px solid #e11414;
+    cursor: not-allowed;
+}
+
 .battle-content {
     width: inherit;
     height: inherit;
