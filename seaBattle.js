@@ -178,7 +178,6 @@ class Ship {
             ship.addEventListener("dragend", (e) => {
                 ship.classList.remove('draggable')
 
-                dragged = null;
                 ship.style.visibility = "visible";
             })
 
@@ -186,40 +185,47 @@ class Ship {
             ship.addEventListener("click", (e) => {
                 const oldX = ship.closest(".battle-content").getAttribute("data-x")
                 const oldY = ship.closest(".battle-content").getAttribute("data-y")
-                this.getOldElems(ship, oldX, oldY, e.target.getAttribute("position"));
 
+                const whereReturn = this.getOldElems(ship, oldX, oldY, ship.getAttribute("position"))
                 this.checkPositionShip(ship)
-                this.setPositionShip(ship)
 
-                this.getBusyElems(e.target)
+                //acess click............................................
+                const checkAllow = this.getAcessAppend(ship, ship.parentElement, grabOffsetX, grabOffsetY)
+
+                if (checkAllow) {
+                    this.checkPositionShip(ship)
+                    whereReturn[0].appendChild(ship)
+                    this.setPositionShip(ship)
+                    this.getBusyElems(e.target)
+                    ship.classList.add("shake");
+                    ship.addEventListener("animationend", () => {
+                        ship.classList.remove("shake");
+                    }, { once: true });
+                }
+                else {
+                    this.setPositionShip(ship)
+                    this.getBusyElems(e.target)
+                }
 
             })
         })
-
 
         dropZones.forEach((dropZone, colIndex) => {
 
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault()
 
-                const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
+                // const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
 
-                // if (checkAllow) {
-                //     dragged.classList.remove("draggable")
-                // } else {
-                //     dragged.classList.add('draggable')
-                // }
 
 
             })
 
-            dropZone.addEventListener("click", (e) => {
-                console.log(dropZone.getBoundingClientRect())
-
-            })
 
             dropZone.addEventListener("drop", (e) => {
                 e.preventDefault()
+                if (!dragged) return;
+
                 const oldX = e.dataTransfer.getData("data-x")
                 const oldY = e.dataTransfer.getData("data-y")
                 dragged.classList.remove("draggable")
@@ -227,19 +233,25 @@ class Ship {
 
                 const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
                 const whereReturn = this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"))
-                console.log("whereReturn", whereReturn)
+
                 if (checkAllow) {
-                    console.log("drop banned")
                     const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips')
                     target.appendChild(dragged)
-                } else {
-                    console.log("whereReturn", whereReturn)
-                    console.log("can drop")
-                    console.log(this.grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY), "grab")
+                    this.getBusyElems(dragged)
+
+                    dragged.classList.add("shake");
+                    if (dragged.classList.contains("shake")) {
+                        dragged.addEventListener("animationend",  function() {
+                            this.classList.remove("shake");
+                            }, { once: true });
+                    }
+                }
+
+                else {
+                    this.grabEdgeElems(dragged, dropZone,grabOffsetX, grabOffsetY)
                 }
 
                 dragged = null
-
 
             })
         })
@@ -259,7 +271,6 @@ class Ship {
                 lengthShip += x
                 for (let i = x; i < lengthShip; i++) {
                     const busyElem = document.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
-                    console.log("busyElem", busyElem);
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
                 }
@@ -292,7 +303,6 @@ class Ship {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldX)
                 for (let i = +oldX; i < oldLength; i++) {
                     const oldElem = document.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
-                    console.log("oldElem", oldElem)
                     if (oldElem !== currentPosition) {
                         oldElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-busy')
                         oldElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-empty')
@@ -318,10 +328,9 @@ class Ship {
         }
     }
 
-    grabEdgeElems(dragged, dropZone, colIndex, grabOffsetX, grabOffsetY) {
+    grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY) {
         if (!dragged) return;
 
-        const mouseCol = colIndex;
         const row = dropZone;
         const rowX = Number(row.getAttribute("data-x"));
         const rowY = Number(row.getAttribute("data-y"));
@@ -356,11 +365,11 @@ class Ship {
         dragged.style.top = "0px";
         dragged.style.visibility = "visible";
 
-        return null;
+        // return null;
     }
 
 
-    getAcessAppend(ship, dropZone, grabOffsetX, grabOffsetY, cellSize) {
+    getAcessAppend(ship, dropZone, grabOffsetX, grabOffsetY) {
         const lengthShip = Number(ship.getAttribute("data-length"));
         const position = ship.getAttribute("position");
         const rowX = Number(dropZone.getAttribute("data-x"));
