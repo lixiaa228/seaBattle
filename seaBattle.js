@@ -92,14 +92,53 @@ class Ship {
             divShip.setAttribute("data-length", arrShipsLength[i])
             divShip.setAttribute("draggable", "true")
             divShip.setAttribute("data-id", this.generateShipId())
-            divShip.setAttribute("position", this.setRandomVertical(divShip))
-            divShip.style.left = "20px";
-            divShip.style.top = "20px";
-            this.setPositionShip(divShip);
+            // divShip.setAttribute("position", this.setRandomVertical(divShip))
+            divShip.setAttribute("position", "h")
 
+            // divShip.style.left = "20px";
+            // divShip.style.top = "20px";
             ships.push(divShip);
             zoneWithShips.appendChild(divShip)
+            this.setPositionShip(divShip);
+
+
         }
+        const shipPosition = {
+            4: {
+                left: "20px",
+                top: "30px"
+            },
+            3: {
+                left: "20px",
+                top: "110px"
+            },
+            2: {
+                left: "20px",
+                top: "190px"
+            },
+            1: {
+                left: "20px",
+                top: "270px"
+            }
+        }
+
+        const elems = document.querySelectorAll("[data-length]");
+        elems.forEach(elem => {
+            const key = elem.getAttribute("data-length");
+            if (shipPosition[key]) {
+                const props = shipPosition[key];
+
+                for (let prop in props) {
+                    if (prop === "left") {
+                        elem.style.left = props[prop];
+                    }
+                    if (prop === "top") {
+                        elem.style.top = props[prop];
+                    }
+                }
+            }
+        })
+
         return ships;
     }
 
@@ -112,10 +151,9 @@ class Ship {
     }
 
     setPositionShip(ship) {
-        const vertical = ship.getAttribute("position");
         const shipHeight = this.sizeShip.height
         const shipWidth = this.sizeShip.width
-        const lengthShip = Number(ship.getAttribute("data-length"))
+        const {position: vertical, lengthShip} = this.getElementData(ship, ["position", "lengthShip"]);
 
         switch (vertical) {
 
@@ -141,7 +179,6 @@ class Ship {
         }
     }
 
-
     moveShip() {
         const ships = document.querySelectorAll('.ship-box-draggable');
         const dropZones = document.querySelectorAll('.battle-content');
@@ -150,7 +187,6 @@ class Ship {
         let dragged = null;
         let grabOffsetY = 0;
         let grabOffsetX = 0;
-
 
         //...............drag..and..drop................................
         ships.forEach(ship => {
@@ -177,7 +213,6 @@ class Ship {
 
             ship.addEventListener("dragend", (e) => {
                 ship.classList.remove('draggable')
-
                 ship.style.visibility = "visible";
             })
 
@@ -186,27 +221,35 @@ class Ship {
                 const oldX = ship.closest(".battle-content").getAttribute("data-x")
                 const oldY = ship.closest(".battle-content").getAttribute("data-y")
 
-                const whereReturn = this.getOldElems(ship, oldX, oldY, ship.getAttribute("position"))
+                this.getOldElems(ship, oldX, oldY, ship.getAttribute("position"))
                 this.checkPositionShip(ship)
 
-                //acess click............................................
-                const checkAllow = this.getAcessAppend(ship, ship.parentElement, grabOffsetX, grabOffsetY)
+                const isAvailableCell = this.isAvailableCell(ship, ship.parentElement)
+                // console.log(isAvailableCell, "isAvailableCell")
 
-                if (checkAllow) {
+                const coordinates = ship.getBoundingClientRect()
+                const grabOffsetYForClick = e.clientY - coordinates.top;
+                const grabOffsetXForClick = e.clientX - coordinates.left;
+
+                const canPlaceInCell = this.canPlaceInCell(ship, ship.parentElement, grabOffsetXForClick, grabOffsetYForClick)
+                // console.log(canPlaceInCell, "canPlaceInCell")
+
+                //access..click..........................................
+                if (!canPlaceInCell && !isAvailableCell) {
+                    this.setPositionShip(ship)
+                    this.getBusyElems(ship)
+                } else {
+                    // console.log("can't click")
                     this.checkPositionShip(ship)
-                    whereReturn[0].appendChild(ship)
-                    this.setPositionShip(ship)
-                    this.getBusyElems(e.target)
+                    this.getBusyElems(ship)
+
                     ship.classList.add("shake");
-                    ship.addEventListener("animationend", () => {
-                        ship.classList.remove("shake");
-                    }, { once: true });
-                }
-                else {
-                    this.setPositionShip(ship)
-                    this.getBusyElems(e.target)
+                    ship.addEventListener("animationend", function () {
+                        this.classList.remove("shake");
+                    }, {once: true});
                 }
 
+                // console.log(document.querySelectorAll(".battlefield-cell-busy"))
             })
         })
 
@@ -214,13 +257,7 @@ class Ship {
 
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault()
-
-                // const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
-
-
-
             })
-
 
             dropZone.addEventListener("drop", (e) => {
                 e.preventDefault()
@@ -230,26 +267,32 @@ class Ship {
                 const oldY = e.dataTransfer.getData("data-y")
                 dragged.classList.remove("draggable")
 
+                const appendShip = this.grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY)
+                this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"));
 
-                const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
-                const whereReturn = this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"))
+                const isAvailableCell = this.isAvailableCell(dragged, appendShip)
+                const canPlaceInCell = this.canPlaceInCell(dragged, dropZone, grabOffsetX, grabOffsetY)
 
-                if (checkAllow) {
-                    const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips')
-                    target.appendChild(dragged)
+                // console.log(isAvailableCell, "isAvailableCell")
+                // console.log(canPlaceInCell, "canPlaceInCell")
+
+                if (!canPlaceInCell && !isAvailableCell) {
+                    appendShip.appendChild(dragged)
+                    this.getBusyElems(dragged)
+
+                } else {
+                    if (dragged.parentElement.classList.contains("zoneWithShips")) return;
                     this.getBusyElems(dragged)
 
                     dragged.classList.add("shake");
-                    if (dragged.classList.contains("shake")) {
-                        dragged.addEventListener("animationend",  function() {
-                            this.classList.remove("shake");
-                            }, { once: true });
-                    }
+                    dragged.addEventListener("animationend", function () {
+                        this.classList.remove("shake");
+                    }, {once: true});
+
                 }
 
-                else {
-                    this.grabEdgeElems(dragged, dropZone,grabOffsetX, grabOffsetY)
-                }
+                // console.log(document.querySelectorAll(".battlefield-cell-busy"))
+
 
                 dragged = null
 
@@ -257,13 +300,74 @@ class Ship {
         })
     }
 
+//correct?.....................
+    isAvailableCell(ship, dropZone) {
+        if (!ship) return
+        if (!dropZone) return
+
+        const {position, lengthShip} = this.getElementData(ship, ["position", "lengthShip"]);
+        const {x, y} = this.getElementData(dropZone, ["x", "y"]);
+
+        const currentCell = dropZone.closest("td");
+        const currentRow = currentCell.closest("tr");
+
+        const currentCellIndex = currentCell.cellIndex; //индекс текущего корабля
+        const currentRowIndex = currentRow.rowIndex;
+
+        const prevRow = currentRow.previousElementSibling; //предыдущий ряд
+        const nextRow = currentRow.nextElementSibling; // следующий ряд
+
+        const tbody = document.querySelector("table tbody");
+        let arr = []
+        const left = currentCellIndex - 1
+
+        switch (position) {
+            case "h": {
+
+                const right = currentCellIndex + lengthShip
+
+                if (left !== 0) arr.push(currentRow.cells[left])
+                if (right !== 11) arr.push(currentRow.cells[right])
+
+                for (let i = left; i <= right; i++) {
+                    if (i === 0 || i === 11) continue;
+
+                    if (prevRow) arr.push(prevRow.cells[i])
+                    if (nextRow) arr.push(nextRow.cells[i])
+                }
+                break;
+            }
+
+            case "v": {
+                const bellow = currentRowIndex + lengthShip - 1
+                const right = currentCellIndex + 1
+
+                if (prevRow) arr.push(prevRow.cells[currentCellIndex])
+                if (tbody.rows[bellow]) arr.push(tbody.rows[bellow].cells[currentCellIndex])
+
+                for (let i = (currentRowIndex - 2); i <= bellow; i++) {
+                    if (i < 0 || i > 9) continue;
+
+                    if (left) arr.push(tbody.rows[i].cells[left])
+                    if (right) arr.push(tbody.rows[i].cells[right])
+                }
+                break;
+            }
+
+        }
+        const hasBusy = arr
+            .filter(el => el && el.tagName === "TD") // оставляем только td
+            .some(el => el.classList.contains("battlefield-cell-busy"));
+
+        return hasBusy;
+    }
+
 
     getBusyElems(ship) {
-        const x = Number(ship.parentElement.getAttribute("data-x"));
-        const y = Number(ship.parentElement.getAttribute("data-y"));
-        let lengthShip = Number(ship.getAttribute("data-length"))
-        const vertical = ship.getAttribute("position");
+        const {x, y} = this.getElementData(ship.parentElement, ["x", "y"]);
+        let {lengthShip, position: vertical} = this.getElementData(ship, ["lengthShip", "position"]);
         const cell = "battlefield-cell"
+        let arr = []
 
         switch (vertical) {
             case "h": {
@@ -271,6 +375,7 @@ class Ship {
                 lengthShip += x
                 for (let i = x; i < lengthShip; i++) {
                     const busyElem = document.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
+                    arr.push(busyElem)
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
                 }
@@ -281,19 +386,19 @@ class Ship {
                 lengthShip += y
                 for (let i = y; i < lengthShip; i++) {
                     const busyElem = document.querySelector(`[data-x="${x}"][data-y="${[i]}"]`)
+                    arr.push(busyElem)
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
                 }
             }
         }
-        return ship
+        return arr
     }
 
     getOldElems(ship, oldX, oldY, vertical) {
         if (!oldX && !oldY) return
-        const x = ship.getAttribute("data-x");
-        const y = ship.getAttribute("data-y");
 
+        const {x, y} = this.getElementData(ship, ["x", "y"]);
         const currentPosition = document.querySelector(`[data-x="${x}"][data-y="${y}"]`)
         const cell = "battlefield-cell"
 
@@ -303,6 +408,7 @@ class Ship {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldX)
                 for (let i = +oldX; i < oldLength; i++) {
                     const oldElem = document.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
+                    // console.log("oldElem", oldElem)
                     if (oldElem !== currentPosition) {
                         oldElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-busy')
                         oldElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-empty')
@@ -316,7 +422,7 @@ class Ship {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldY)
                 for (let i = +oldY; i < oldLength; i++) {
                     const oldElem = document.querySelector(`[data-x="${+oldX}"][data-y="${[i]}"]`)
-
+                    // console.log("oldElem", oldElem)
                     if (oldElem !== currentPosition) {
                         oldElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-busy')
                         oldElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-empty')
@@ -328,92 +434,253 @@ class Ship {
         }
     }
 
+    //remind that need also append dragged..............works right..mb((
     grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY) {
         if (!dragged) return;
 
-        const row = dropZone;
-        const rowX = Number(row.getAttribute("data-x"));
-        const rowY = Number(row.getAttribute("data-y"));
+        const {x: rowX, y: rowY} = this.getElementData(dropZone, ["x", "y"])
+        const vertical = dragged.getAttribute("position")
+        let grabOffsetTargetAxis
+        let rowTargetAxis
+        let targetElem
 
-        switch (dragged.getAttribute("position")) {
+        switch (vertical) {
             case "h": {
-                const grabOffsetColsX = Math.floor(grabOffsetX / this.cellSize);
-                const diffHorizontal = rowX - grabOffsetColsX;
-                const leftestElem = document.querySelector(
-                    `[data-x="${diffHorizontal}"][data-y="${rowY}"]`
-                );
-                leftestElem.appendChild(dragged);
+                grabOffsetTargetAxis = grabOffsetX
+                rowTargetAxis = rowX
                 break;
             }
+
             case "v": {
-                const grabOffsetColsY = Math.floor(grabOffsetY / this.cellSize);
-                const diffVertical = rowY - grabOffsetColsY;
-                const hightestElem = document.querySelector(
-                    `[data-x="${rowX}"][data-y="${diffVertical}"]`
-                );
-                hightestElem.appendChild(dragged);
+                grabOffsetTargetAxis = grabOffsetY
+                rowTargetAxis = rowY
                 break;
             }
         }
 
-        this.getBusyElems(dragged);
+        const grabOffsetColsTarget = Math.floor(grabOffsetTargetAxis / this.cellSize);
+        const differenceTargetVertical = rowTargetAxis - grabOffsetColsTarget
+
+        if (vertical === "h") {
+            targetElem = document.querySelector(`[data-x="${differenceTargetVertical}"][data-y="${rowY}"]`);
+        } else {
+            targetElem = document.querySelector(`[data-x="${rowX}"][data-y="${differenceTargetVertical}"]`);
+        }
+
+        // this.getBusyElems(dragged);
 
         const rect = dropZone.getBoundingClientRect();
-
         dragged.style.position = "absolute";
         dragged.style.left = (rect.left - rect.left) + "px";
         dragged.style.top = "0px";
         dragged.style.visibility = "visible";
 
-        // return null;
+        return targetElem;
     }
 
+//works right no
+    canPlaceInCell(ship, dropZone, grabOffsetX, grabOffsetY) {
+        const {lengthShip, position} = this.getElementData(ship, ["lengthShip", "position"]);
+        const {x: rowX, y: rowY} = this.getElementData(dropZone, ["x", "y"]);
+        let grabOffsetTarget
+        let targetAxis
 
-    getAcessAppend(ship, dropZone, grabOffsetX, grabOffsetY) {
-        const lengthShip = Number(ship.getAttribute("data-length"));
-        const position = ship.getAttribute("position");
-        const rowX = Number(dropZone.getAttribute("data-x"));
-        const rowY = Number(dropZone.getAttribute("data-y"));
         switch (position) {
+
             case "h": {
-                const grabOffsetColsX = Math.floor(grabOffsetX / this.cellSize) + 1;
-                const acessCell = lengthShip - grabOffsetColsX
-
-                if ((acessCell + rowX) > 9) {
-                    return true
-                } else {
-                    return false
-                }
-
+                targetAxis = rowX
+                grabOffsetTarget = grabOffsetX
+                break;
             }
 
             case "v": {
-                const grabOffsetColsY = Math.floor(grabOffsetY / this.cellSize) + 1;
-                const acessCell = lengthShip - grabOffsetColsY
-                if ((acessCell + rowY) > 9) {
-                    return true
-                } else {
-                    return false
-                }
+                targetAxis = rowY
+                grabOffsetTarget = grabOffsetY
+                break;
             }
 
         }
+        const grabOffsetColsTarget = Math.floor(grabOffsetTarget / this.cellSize) + 1;
+        const acessCell = lengthShip - grabOffsetColsTarget
+
+        if ((acessCell + targetAxis) > 9 || ((acessCell + targetAxis) - lengthShip) < -1) {
+            return true
+        } else {
+            return false
+        }
+    }
+
+
+    getElementData(el, keys = []) {
+        if (!el) return
+        const allData = {
+            lengthShip: Number(el.getAttribute("data-length")),
+            id: el.getAttribute("data-id"),
+            x: Number(el.getAttribute("data-x")),
+            y: Number(el.getAttribute("data-y")),
+            position: el.getAttribute("position"),
+        };
+
+        if (keys.length === 0) return allData;
+        return Object.fromEntries(
+            Object.entries(allData).filter(([k]) => keys.includes(k))
+        );
     }
 }
 
 
+
+
+
+class StartGame {
+    constructor() {
+        this.buttonReady = document.querySelector("#buttonReady")
+
+        this.field1Ships = {}
+        this.field2Ships = {}
+    }
+
+
+    readyButtonEvent() {
+        this.buttonReady.addEventListener("click", (e) => {
+            const busyShips = document.querySelectorAll(".battlefield-cell-busy")
+            if (busyShips.length === 20) {
+
+                const ships = document.querySelectorAll(".ship-box-draggable")
+                console.log(ships)
+                ships.forEach(ship => {
+                    this.field1Ships[ship.getAttribute("data-id")] = ship.getAttribute("data-length")
+
+                })
+                console.log(this.field1Ships)
+                return true
+
+            } else {
+                const errorText = document.querySelector(".error-text-empty-field")
+                errorText.textContent = "Firstly fill all ships!"
+                errorText.classList.add("shake");
+                errorText.addEventListener("animationend", function () {
+                    this.classList.remove("shake");
+                }, {once: true});
+            }
+        })
+    }
+
+    startGame() {
+        if (this.field1Ships) {
+            console.log("aboba")
+
+        }
+    }
+
+}
+
+
 const createField = new TableField()
+
+const firstPlayer = createField.createTableField(field1)
 const appendShips = new Ship()
-const firstShip = createField.createTableField(field1)
-
-
-appendShips.createShips(firstShip)
+appendShips.createShips(firstPlayer)
 appendShips.moveShip()
 
+const firstPlayerReady = new StartGame(firstPlayer)
+firstPlayerReady.readyButtonEvent()
+firstPlayerReady.startGame()
 
-// class Battle {
+
+
+
+
+
+
+
+
+
+// const sdsd = this.grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY)
+// const allowPaste = this.allowPaste(dragged, sdsd)
+// console.log(allowPaste, "allowPaste")
 //
+// const checkAllow = this.getAcessAppend(dragged, dropZone, grabOffsetX, grabOffsetY)
+// console.log(checkAllow, "checkAllow")
+// const whereReturn = this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"))
+
+
+// allowPaste.forEach(el => {
+//     if (el.classList.contains('battlefield-cell-busy')) {
+//         const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips')
+//         target.appendChild(dragged)
 //
+//         dragged.classList.add("shake");
+//         if (dragged.classList.contains("shake")) {
+//             dragged.addEventListener("animationend", function () {
+//                 this.classList.remove("shake");
+//             }, {once: true});
+//         }
+//     }
+// })
+// allowPaste.forEach(el => {
+//     if (el.classList.contains('battlefield-cell-busy')) {
+//         const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips')
+//         target.appendChild(dragged)
+//     }
+// })
+
+// if (checkAllow) {
+//     const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips')
+//     target.appendChild(dragged)
+//     this.getBusyElems(dragged)
+//
+//     dragged.classList.add("shake");
+//     if (dragged.classList.contains("shake")) {
+//         dragged.addEventListener("animationend", function () {
+//             this.classList.remove("shake");
+//         }, {once: true});
+//     }
+// }
+//
+//     else if (allowPaste) {
+//         const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips')
+//         target.appendChild(dragged)
+//         this.getBusyElems(dragged)
+//
+//         dragged.classList.add("shake");
+//         if (dragged.classList.contains("shake")) {
+//             dragged.addEventListener("animationend", function () {
+//                 this.classList.remove("shake");
+//             }, {once: true});
+//         }
+//     }
+
+// if (checkAllow || allowPaste) {
+//     const target = whereReturn?.[0] ?? document.querySelector('.zoneWithShips');
+//     target.appendChild(dragged);
+//     this.getBusyElems(dragged)
+//
+//     dragged.classList.add("shake");
+//     dragged.addEventListener("animationend", function () {
+//         this.classList.remove("shake");
+//     }, {once: true});
+// } else {
+
+// case "h": {
+//     const grabOffsetColsX = Math.floor(grabOffsetX / this.cellSize) + 1;
+//     const acessCell = lengthShip - grabOffsetColsX
+//     if ((acessCell + rowX) > 9 || ((acessCell + rowX) - lengthShip) < -1) {
+//
+//         return true
+//     } else {
+//         return false
+//     }
+// }
+//
+// case "v": {
+//     const grabOffsetColsY = Math.floor(grabOffsetY / this.cellSize) + 1;
+//     const acessCell = lengthShip - grabOffsetColsY
+//     if ((acessCell + rowY) > 9 || ((acessCell + rowY) - lengthShip) < -1) {
+//         return true
+//     } else {
+//         return false
+//     }
 // }
 
 // switchBusyEmptyFields(ship, oldX, oldY) {
@@ -499,6 +766,18 @@ appendShips.moveShip()
 //     }
 // }
 
+// if (checkAllow) {
+//     this.checkPositionShip(ship)
+//     whereReturn[0].appendChild(ship)
+//     this.setPositionShip(ship)
+//     this.getBusyElems(e.target)
+//
+//     ship.classList.add("shake");
+//     ship.addEventListener("animationend", () => {
+//         ship.classList.remove("shake");
+//     }, {once: true});
+//
+// }
 
 // calculatePosition(ship)
 // {
@@ -648,3 +927,30 @@ appendShips.moveShip()
 //                 }
 //             }
 //         }
+// const lengthShip = Number(ship.getAttribute("data-length"));
+// const position = ship.getAttribute("position");
+// const rowX = Number(dropZone.getAttribute("data-x"));
+// const rowY = Number(dropZone.getAttribute("data-y"));
+
+// switch (dragged.getAttribute("position")) {
+//     case "h": {
+//         const grabOffsetColsX = Math.floor(grabOffsetX / this.cellSize);
+//         const diffHorizontal = rowX - grabOffsetColsX;
+//         const leftestElem = document.querySelector(
+//             `[data-x="${diffHorizontal}"][data-y="${rowY}"]`
+//         );
+//         // leftestElem.appendChild(dragged);
+//         target = leftestElem
+//         break;
+//     }
+//     case "v": {
+//         const grabOffsetColsY = Math.floor(grabOffsetY / this.cellSize);
+//         const diffVertical = rowY - grabOffsetColsY;
+//         const hightestElem = document.querySelector(
+//             `[data-x="${rowX}"][data-y="${diffVertical}"]`
+//         );
+//         // hightestElem.appendChild(dragged);
+//         target = hightestElem
+//         break;
+//     }
+// }

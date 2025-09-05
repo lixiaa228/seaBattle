@@ -8,7 +8,7 @@ body {
 
 .wrapper {
     max-width: 1200px;
-    background-color: #FFF2E0;
+    background-color: #ffffff;
     margin: 0 auto;
     height: 840px;
     display: flex;
@@ -63,8 +63,8 @@ th {
 
 
 .zoneWithShips {
-    height: 500px;
-    width: 500px;
+    height: 350px;
+    width: 400px;
     border: 1px solid #4644a6;
     display: flex;
     flex-wrap: wrap;
@@ -109,14 +109,59 @@ th {
 }
 
 @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    75% { transform: translateX(-5px); }
-    100% { transform: translateX(0); }
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    50% {
+        transform: translateX(5px);
+    }
+    75% {
+        transform: translateX(-5px);
+    }
+    100% {
+        transform: translateX(0);
+    }
 }
 
 .shake {
     animation: shake 0.4s;
     border: #e11414 solid 2px;
+}
+
+.btn-ready {
+    display: flex;
+    margin: 30px;
+    flex-direction: column;
+}
+
+.ready {
+    border: 2px solid #00f;
+    /*border-radius: 15px;*/
+    height: 40px;
+    background: #ffffff;
+    width: 150px;
+    font-size: 20px;
+    cursor: pointer;
+
+}
+.ready:hover {
+    border: 2px solid #0000c4;
+    /*border-radius: 15px;*/
+    height: 40px;
+    background: #000591;
+    width: 150px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #ffffff;
+
+}
+.error-text-empty-field {
+    margin: 10px 0;
+    color: #e13935;
+    font-weight: bold;
+    font-size: 18px;
+    border: none
 }
