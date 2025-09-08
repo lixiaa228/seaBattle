@@ -165,3 +165,28 @@ th {
     font-size: 18px;
     border: none
 }
+
+.btn-startGame {
+    display: flex;
+    margin: 30px;
+    flex-direction: column;
+}
+
+.startGame {
+    border: 2px solid #5eb939;
+    /*border-radius: 15px;*/
+    height: 40px;
+    background: #ffffff;
+    width: 150px;
+    font-size: 20px;
+    cursor: pointer;
+}
+.startGame:hover {
+    border: 2px solid #3f7c26;
+    height: 40px;
+    background: #49912c;
+    width: 150px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #ffffff;
+}

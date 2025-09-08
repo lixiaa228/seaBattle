@@ -40,23 +40,19 @@ class TableField {
 
             for (let j = 0; j < 10; j++) {
 
-
                 const td = document.createElement('td')
                 td.classList.add('battlefield-cell');
                 td.classList.add('battlefield-cell-empty');
-
 
                 const div = document.createElement('div')
                 div.classList.add('battle-content')
                 div.setAttribute("data-x", [j])
                 div.setAttribute("data-y", [i])
 
-
                 this.span = document.createElement("span");
                 this.span.classList.add('z');
 
                 // this.span.setAttribute("draggable", "true");
-
 
 //..........insert..elements.......
                 td.appendChild(div)
@@ -81,7 +77,7 @@ class Ship {
         const arrShipsLength = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4];
         const ships = [];
 
-        const tdSize = document.querySelector('td');
+        const tdSize = playField.querySelector('td');
         this.sizeShip = tdSize.getBoundingClientRect();
 
 //..........create..ships..and..give..properties.........
@@ -179,9 +175,12 @@ class Ship {
         }
     }
 
-    moveShip() {
-        const ships = document.querySelectorAll('.ship-box-draggable');
-        const dropZones = document.querySelectorAll('.battle-content');
+    moveShip(field) {
+        const zoneWithShips = document.querySelector('.zoneWithShips')
+        const ships = zoneWithShips.querySelectorAll('.ship-box-draggable');
+        const dropZones = field.querySelectorAll('.battle-content');
+
+
 
         this.cellSize = 50;
         let dragged = null;
@@ -197,7 +196,6 @@ class Ship {
                     e.dataTransfer.setData("data-x", e.target.closest(".battle-content").getAttribute("data-x"));
                     e.dataTransfer.setData("data-y", e.target.closest(".battle-content").getAttribute("data-y"));
                 }
-
 
                 //test....................................
                 dragged = ship;
@@ -257,23 +255,27 @@ class Ship {
 
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault()
+
             })
 
             dropZone.addEventListener("drop", (e) => {
                 e.preventDefault()
                 if (!dragged) return;
 
+
                 const oldX = e.dataTransfer.getData("data-x")
                 const oldY = e.dataTransfer.getData("data-y")
                 dragged.classList.remove("draggable")
 
-                const appendShip = this.grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY)
+
+                const appendShip = this.grabEdgeElems(dragged, e.currentTarget, grabOffsetX, grabOffsetY, field)
                 this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"));
 
-                const isAvailableCell = this.isAvailableCell(dragged, appendShip)
+                console.log("APPP", appendShip)
+                const isAvailableCell = this.isAvailableCell(dragged, appendShip, field)
                 const canPlaceInCell = this.canPlaceInCell(dragged, dropZone, grabOffsetX, grabOffsetY)
-
-                // console.log(isAvailableCell, "isAvailableCell")
+                console.log(isAvailableCell, canPlaceInCell, "ПРАВЕРКА")
+                // console.log(isAvailableCell, "isAvailableCell")k
                 // console.log(canPlaceInCell, "canPlaceInCell")
 
                 if (!canPlaceInCell && !isAvailableCell) {
@@ -301,23 +303,25 @@ class Ship {
     }
 
 //correct?.....................
-    isAvailableCell(ship, dropZone) {
+    isAvailableCell(ship, dropZone, field) {
         if (!ship) return
         if (!dropZone) return
 
         const {position, lengthShip} = this.getElementData(ship, ["position", "lengthShip"]);
         const {x, y} = this.getElementData(dropZone, ["x", "y"]);
 
+        console.log(ship, dropZone, field);
         const currentCell = dropZone.closest("td");
         const currentRow = currentCell.closest("tr");
+
 
         const currentCellIndex = currentCell.cellIndex; //индекс текущего корабля
         const currentRowIndex = currentRow.rowIndex;
 
         const prevRow = currentRow.previousElementSibling; //предыдущий ряд
         const nextRow = currentRow.nextElementSibling; // следующий ряд
-
-        const tbody = document.querySelector("table tbody");
+        console.log("field", field)
+        const tbody = field.querySelector("table tbody");
         let arr = []
         const left = currentCellIndex - 1
 
@@ -435,7 +439,7 @@ class Ship {
     }
 
     //remind that need also append dragged..............works right..mb((
-    grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY) {
+    grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY, field) {
         if (!dragged) return;
 
         const {x: rowX, y: rowY} = this.getElementData(dropZone, ["x", "y"])
@@ -462,9 +466,9 @@ class Ship {
         const differenceTargetVertical = rowTargetAxis - grabOffsetColsTarget
 
         if (vertical === "h") {
-            targetElem = document.querySelector(`[data-x="${differenceTargetVertical}"][data-y="${rowY}"]`);
+            targetElem = field.querySelector(`[data-x="${differenceTargetVertical}"][data-y="${rowY}"]`);
         } else {
-            targetElem = document.querySelector(`[data-x="${rowX}"][data-y="${differenceTargetVertical}"]`);
+            targetElem = field.querySelector(`[data-x="${rowX}"][data-y="${differenceTargetVertical}"]`);
         }
 
         // this.getBusyElems(dragged);
@@ -529,15 +533,26 @@ class Ship {
 }
 
 
-
-
-
 class StartGame {
     constructor() {
         this.buttonReady = document.querySelector("#buttonReady")
+        this.buttonStartGame = document.querySelector("#buttonStartGame")
+        this.errorText = document.querySelector(".error-text-empty-field")
+
+        this.firstPlayerReady = false;
+        this.secondPlayerReady = false;
+
 
         this.field1Ships = {}
         this.field2Ships = {}
+    }
+
+    firstPlayer() {
+        const newField = new TableField()
+        const firstGameField = newField.createTableField(field1)
+        const ships = new Ship()
+        ships.createShips(firstGameField)
+        ships.moveShip(field1)
     }
 
 
@@ -553,47 +568,68 @@ class StartGame {
 
                 })
                 console.log(this.field1Ships)
-                return true
+                this.firstPlayerReady = true;
+                this.nextIfFlagTrue()
 
             } else {
-                const errorText = document.querySelector(".error-text-empty-field")
-                errorText.textContent = "Firstly fill all ships!"
-                errorText.classList.add("shake");
-                errorText.addEventListener("animationend", function () {
-                    this.classList.remove("shake");
-                }, {once: true});
+                this.errorFillAllFields()
             }
         })
     }
 
-    startGame() {
-        if (this.field1Ships) {
-            console.log("aboba")
-
+    nextIfFlagTrue() {
+        if (this.firstPlayerReady) {
+            this.secondPlayer();
         }
     }
 
+    secondPlayer() {
+        this.buttonStartGame.hidden = false
+        this.buttonReady.hidden = true
+        field1.hidden = true
+        field1.style.pointerEvents = "none";
+        this.errorText.hidden = true
+
+        const newField = new TableField()
+        const secondGameField = newField.createTableField(field2)
+        const ships = new Ship()
+        ships.createShips(secondGameField)
+        ships.moveShip(field2)
+
+    }
+
+    errorFillAllFields() {
+        this.errorText.textContent = "Firstly fill all ships!"
+        this.errorText.classList.add("shake");
+        this.errorText.addEventListener("animationend", function () {
+            this.classList.remove("shake");
+        }, {once: true});
+    }
+
+    startGameButtonEvent() {
+        this.buttonStartGame.addEventListener("click", (e) => {
+
+        })
+    }
 }
 
-
-const createField = new TableField()
-
-const firstPlayer = createField.createTableField(field1)
-const appendShips = new Ship()
-appendShips.createShips(firstPlayer)
-appendShips.moveShip()
-
-const firstPlayerReady = new StartGame(firstPlayer)
-firstPlayerReady.readyButtonEvent()
-firstPlayerReady.startGame()
+const start = new StartGame();
+start.firstPlayer()
+start.readyButtonEvent()
+start.startGameButtonEvent()
 
 
-
-
-
-
-
-
+// const createField = new TableField()
+//
+// const firstPlayer = createField.createTableField(field1)
+// const appendShips = new Ship()
+// appendShips.createShips(firstPlayer)
+// appendShips.moveShip()
+//
+// const firstPlayerReady = new StartGame(firstPlayer)
+// firstPlayerReady.readyButtonEvent()
+// firstPlayerReady.startGame()
+//
 
 
 // const sdsd = this.grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY)
