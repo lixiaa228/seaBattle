@@ -197,3 +197,60 @@ th {
     margin-top: 20px;
 
 }
+.activeField {
+    display: flex;
+    flex-direction: column;
+}
+.activeField td:hover {
+    /*border: 2px solid #4dd328;*/
+    outline: 2px solid #4dd328;
+}
+
+.clickedEmptyCell {
+    color: #9d9d9d;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.woundedCell {
+    color: #f60a0a;
+    font-size: 30px;
+}
+
+.z::before,
+.z::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2px;          /* толщина линии */
+    height: 2px;        /* длина линии */
+    background: red;
+    transform-origin: center;
+    margin: 0;
+    inset: 0;
+}
+
+.z::before {
+    transform: translate(-50%, -50%) rotate(-45deg);
+    top: -25%;
+    left: 50%;
+    height: 150%;
+}
+
+.z::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+    left: -25%;
+    top: 50%;
+    width: 150%;
+
+}
+.z {
+    position: relative;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    display: inline-block;
+
+}

@@ -526,14 +526,26 @@ class ProcessGame {
 
     create2EmptyFields() {
         const fieldPlayer = new TableField()
-        fieldPlayer.createTableField(document.querySelector('.activeFieldPlayer1'))
-        fieldPlayer.createTableField(document.querySelector('.activeFieldPlayer2'))
+        this.activeFieldPlayer1 = document.querySelector('.activeFieldPlayer1')
+        this.activeFieldPlayer2 = document.querySelector('.activeFieldPlayer2')
+
+        fieldPlayer.createTableField(this.activeFieldPlayer1)
+        fieldPlayer.createTableField( this.activeFieldPlayer2)
 
         document.querySelector('.activeField-Player1 .text-ownerField').textContent = "Field player 1"
         document.querySelector('.activeField-Player2 .text-ownerField').textContent = "Field player 2"
     }
 
-    queuePlayers() {
+    queuePlayers(playerTable) {
+        playerTable.forEach(player => {
+            player.addEventListener('click', (e) => {
+                // player.classList.add('clickedEmptyCell')
+                // player.textContent = '•';
+                // player.classList.add('woundedCell')
+                // player.textContent = '⨯';
+                console.log(player.querySelector('.z'))
+            })
+        })
 
     }
 
@@ -549,7 +561,6 @@ class StartGame {
 
         this.firstPlayerReady = false;
         this.secondPlayerReady = false;
-
 
         this.field1Ships = {}
         this.field2Ships = {}
@@ -604,7 +615,6 @@ class StartGame {
         const ships = new Ship()
         ships.createShips(secondGameField)
         ships.moveShip(field2)
-
     }
 
     errorFillAllFields() {
@@ -635,6 +645,7 @@ class StartGame {
 
                 const startGame = new ProcessGame(this.field1Ships, this.field2Ships)
                 startGame.create2EmptyFields()
+                startGame.queuePlayers(document.querySelectorAll('.activeFieldPlayer1 td'))
 
 
             } else {
@@ -650,6 +661,8 @@ const start = new StartGame();
 start.firstPlayer()
 start.readyButtonEvent()
 start.startGameButtonEvent()
+
+
 
 
 // const createField = new TableField()
