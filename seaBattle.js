@@ -181,7 +181,6 @@ class Ship {
         const dropZones = field.querySelectorAll('.battle-content');
 
 
-
         this.cellSize = 50;
         let dragged = null;
         let grabOffsetY = 0;
@@ -216,38 +215,38 @@ class Ship {
 
 
             ship.addEventListener("click", (e) => {
+                if (ship.parentElement.classList.contains('zoneWithShips')) return
+
                 const oldX = ship.closest(".battle-content").getAttribute("data-x")
                 const oldY = ship.closest(".battle-content").getAttribute("data-y")
 
-                this.getOldElems(ship, oldX, oldY, ship.getAttribute("position"))
-                this.checkPositionShip(ship)
+                this.getOldElems(ship, oldX, oldY, ship.getAttribute("position"), field)
+                this.checkPositionShip(e.target)
 
-                const isAvailableCell = this.isAvailableCell(ship, ship.parentElement)
-                // console.log(isAvailableCell, "isAvailableCell")
+                const isAvailableCell = this.isAvailableCell(e.target, e.target.parentElement, field)
 
                 const coordinates = ship.getBoundingClientRect()
                 const grabOffsetYForClick = e.clientY - coordinates.top;
                 const grabOffsetXForClick = e.clientX - coordinates.left;
 
-                const canPlaceInCell = this.canPlaceInCell(ship, ship.parentElement, grabOffsetXForClick, grabOffsetYForClick)
-                // console.log(canPlaceInCell, "canPlaceInCell")
+                const canPlaceInCell = this.canPlaceInCell(e.target, e.target.parentElement, grabOffsetXForClick, grabOffsetYForClick)
+
+                console.log(isAvailableCell, canPlaceInCell, "ПРАВЕРКА")
 
                 //access..click..........................................
                 if (!canPlaceInCell && !isAvailableCell) {
-                    this.setPositionShip(ship)
-                    this.getBusyElems(ship)
+                    this.setPositionShip(e.target)
+                    this.getBusyElems(e.target, field)
                 } else {
-                    // console.log("can't click")
                     this.checkPositionShip(ship)
-                    this.getBusyElems(ship)
+                    this.getBusyElems(ship, field)
 
-                    ship.classList.add("shake");
-                    ship.addEventListener("animationend", function () {
+                    e.target.classList.add("shake");
+                    e.target.addEventListener("animationend", function () {
                         this.classList.remove("shake");
                     }, {once: true});
                 }
 
-                // console.log(document.querySelectorAll(".battlefield-cell-busy"))
             })
         })
 
@@ -255,36 +254,30 @@ class Ship {
 
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault()
-
             })
 
             dropZone.addEventListener("drop", (e) => {
                 e.preventDefault()
                 if (!dragged) return;
 
-
                 const oldX = e.dataTransfer.getData("data-x")
                 const oldY = e.dataTransfer.getData("data-y")
                 dragged.classList.remove("draggable")
 
-
                 const appendShip = this.grabEdgeElems(dragged, e.currentTarget, grabOffsetX, grabOffsetY, field)
-                this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"));
+                this.getOldElems(dragged, oldX, oldY, dragged.getAttribute("position"), field);
 
-                console.log("APPP", appendShip)
                 const isAvailableCell = this.isAvailableCell(dragged, appendShip, field)
-                const canPlaceInCell = this.canPlaceInCell(dragged, dropZone, grabOffsetX, grabOffsetY)
+                const canPlaceInCell = this.canPlaceInCell(dragged, e.currentTarget, grabOffsetX, grabOffsetY)
                 console.log(isAvailableCell, canPlaceInCell, "ПРАВЕРКА")
-                // console.log(isAvailableCell, "isAvailableCell")k
-                // console.log(canPlaceInCell, "canPlaceInCell")
 
                 if (!canPlaceInCell && !isAvailableCell) {
                     appendShip.appendChild(dragged)
-                    this.getBusyElems(dragged)
+                    this.getBusyElems(dragged, field)
 
                 } else {
                     if (dragged.parentElement.classList.contains("zoneWithShips")) return;
-                    this.getBusyElems(dragged)
+                    this.getBusyElems(dragged, field)
 
                     dragged.classList.add("shake");
                     dragged.addEventListener("animationend", function () {
@@ -292,8 +285,6 @@ class Ship {
                     }, {once: true});
 
                 }
-
-                // console.log(document.querySelectorAll(".battlefield-cell-busy"))
 
 
                 dragged = null
@@ -306,21 +297,19 @@ class Ship {
     isAvailableCell(ship, dropZone, field) {
         if (!ship) return
         if (!dropZone) return
+        if (dropZone.parentElement.classList.contains('battlefield-cell-busy')) return true
 
         const {position, lengthShip} = this.getElementData(ship, ["position", "lengthShip"]);
         const {x, y} = this.getElementData(dropZone, ["x", "y"]);
 
-        console.log(ship, dropZone, field);
         const currentCell = dropZone.closest("td");
         const currentRow = currentCell.closest("tr");
-
 
         const currentCellIndex = currentCell.cellIndex; //индекс текущего корабля
         const currentRowIndex = currentRow.rowIndex;
 
         const prevRow = currentRow.previousElementSibling; //предыдущий ряд
         const nextRow = currentRow.nextElementSibling; // следующий ряд
-        console.log("field", field)
         const tbody = field.querySelector("table tbody");
         let arr = []
         const left = currentCellIndex - 1
@@ -359,6 +348,7 @@ class Ship {
             }
 
         }
+        console.log(arr)
         const hasBusy = arr
             .filter(el => el && el.tagName === "TD") // оставляем только td
             .some(el => el.classList.contains("battlefield-cell-busy"));
@@ -367,7 +357,7 @@ class Ship {
     }
 
 
-    getBusyElems(ship) {
+    getBusyElems(ship, field) {
         const {x, y} = this.getElementData(ship.parentElement, ["x", "y"]);
         let {lengthShip, position: vertical} = this.getElementData(ship, ["lengthShip", "position"]);
         const cell = "battlefield-cell"
@@ -378,7 +368,7 @@ class Ship {
 
                 lengthShip += x
                 for (let i = x; i < lengthShip; i++) {
-                    const busyElem = document.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
+                    const busyElem = field.querySelector(`[data-x="${[i]}"][data-y="${y}"]`)
                     arr.push(busyElem)
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
@@ -389,7 +379,7 @@ class Ship {
 
                 lengthShip += y
                 for (let i = y; i < lengthShip; i++) {
-                    const busyElem = document.querySelector(`[data-x="${x}"][data-y="${[i]}"]`)
+                    const busyElem = field.querySelector(`[data-x="${x}"][data-y="${[i]}"]`)
                     arr.push(busyElem)
                     busyElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-empty')
                     busyElem.closest(`[class^="${cell}"]`).classList.add('battlefield-cell-busy')
@@ -399,11 +389,11 @@ class Ship {
         return arr
     }
 
-    getOldElems(ship, oldX, oldY, vertical) {
+    getOldElems(ship, oldX, oldY, vertical, field) {
         if (!oldX && !oldY) return
 
         const {x, y} = this.getElementData(ship, ["x", "y"]);
-        const currentPosition = document.querySelector(`[data-x="${x}"][data-y="${y}"]`)
+        const currentPosition = field.querySelector(`[data-x="${x}"][data-y="${y}"]`)
         const cell = "battlefield-cell"
 
         let returnOldElems = []
@@ -411,7 +401,7 @@ class Ship {
             case "h": {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldX)
                 for (let i = +oldX; i < oldLength; i++) {
-                    const oldElem = document.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
+                    const oldElem = field.querySelector(`[data-x="${[i]}"][data-y="${+oldY}"]`)
                     // console.log("oldElem", oldElem)
                     if (oldElem !== currentPosition) {
                         oldElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-busy')
@@ -425,7 +415,7 @@ class Ship {
             case "v": {
                 const oldLength = Number(ship.getAttribute("data-length")) + Number(oldY)
                 for (let i = +oldY; i < oldLength; i++) {
-                    const oldElem = document.querySelector(`[data-x="${+oldX}"][data-y="${[i]}"]`)
+                    const oldElem = field.querySelector(`[data-x="${+oldX}"][data-y="${[i]}"]`)
                     // console.log("oldElem", oldElem)
                     if (oldElem !== currentPosition) {
                         oldElem.closest(`[class^="${cell}"]`).classList.remove('battlefield-cell-busy')
@@ -507,11 +497,7 @@ class Ship {
         const grabOffsetColsTarget = Math.floor(grabOffsetTarget / this.cellSize) + 1;
         const acessCell = lengthShip - grabOffsetColsTarget
 
-        if ((acessCell + targetAxis) > 9 || ((acessCell + targetAxis) - lengthShip) < -1) {
-            return true
-        } else {
-            return false
-        }
+        return (acessCell + targetAxis) > 9 || ((acessCell + targetAxis) - lengthShip) < -1
     }
 
 
@@ -531,6 +517,28 @@ class Ship {
         );
     }
 }
+
+class ProcessGame {
+    constructor(field1Ships, field2Ships) {
+        this.field1Ships = field1Ships
+        this.field2Ships = field2Ships
+    }
+
+    create2EmptyFields() {
+        const fieldPlayer = new TableField()
+        fieldPlayer.createTableField(document.querySelector('.activeFieldPlayer1'))
+        fieldPlayer.createTableField(document.querySelector('.activeFieldPlayer2'))
+
+        document.querySelector('.activeField-Player1 .text-ownerField').textContent = "Field player 1"
+        document.querySelector('.activeField-Player2 .text-ownerField').textContent = "Field player 2"
+    }
+
+    queuePlayers() {
+
+    }
+
+}
+
 
 
 class StartGame {
@@ -555,18 +563,19 @@ class StartGame {
         ships.moveShip(field1)
     }
 
-
     readyButtonEvent() {
         this.buttonReady.addEventListener("click", (e) => {
-            const busyShips = document.querySelectorAll(".battlefield-cell-busy")
-            if (busyShips.length === 20) {
+            const busyShipsPlayer1 = field1.querySelectorAll(".battlefield-cell-busy")
+            if (busyShipsPlayer1.length === 20) {
 
-                const ships = document.querySelectorAll(".ship-box-draggable")
+                const ships = field1.querySelectorAll(".ship-box-draggable")
                 console.log(ships)
                 ships.forEach(ship => {
                     this.field1Ships[ship.getAttribute("data-id")] = ship.getAttribute("data-length")
 
                 })
+                this.field1Ships['busyShipsPlayer1'] = busyShipsPlayer1
+
                 console.log(this.field1Ships)
                 this.firstPlayerReady = true;
                 this.nextIfFlagTrue()
@@ -608,10 +617,34 @@ class StartGame {
 
     startGameButtonEvent() {
         this.buttonStartGame.addEventListener("click", (e) => {
+            const busyShipsPlayer2 = field2.querySelectorAll(".battlefield-cell-busy")
+            if (busyShipsPlayer2.length === 20) {
+                const ships = field2.querySelectorAll(".ship-box-draggable")
+                ships.forEach(ship => {
+                    this.field2Ships[ship.getAttribute("data-id")] = ship.getAttribute("data-length")
 
+                })
+                this.field2Ships['busyShipsPlayer2'] = busyShipsPlayer2
+                console.log(this.field2Ships)
+                this.secondPlayerReady = true;
+                field2.hidden = true
+                const zoneWithShips = document.querySelector('.zoneWithShips')
+                zoneWithShips.hidden = true
+                zoneWithShips.remove()
+                this.buttonStartGame.hidden = true
+
+                const startGame = new ProcessGame(this.field1Ships, this.field2Ships)
+                startGame.create2EmptyFields()
+
+
+            } else {
+                this.errorFillAllFields()
+            }
         })
     }
 }
+
+
 
 const start = new StartGame();
 start.firstPlayer()
