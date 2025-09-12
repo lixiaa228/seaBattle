@@ -33,6 +33,7 @@ table {
     table-layout: fixed;
     /*margin-left: 30px;*/
 }
+
 td {
     border: 1px solid #4644a6;
     width: 50px;
@@ -42,6 +43,7 @@ td {
     padding: 0;
     position: relative;
 }
+
 th {
     border: none;
     font-weight: lighter;
@@ -64,7 +66,7 @@ th {
 .zoneWithShips {
     height: 350px;
     width: 400px;
-    border: 1px solid #4644a6;
+    /*border: 1px solid #4644a6;*/
     display: flex;
     flex-wrap: wrap;
     position: relative;
@@ -105,7 +107,22 @@ th {
 .playZones {
     display: flex;
     align-items: center;
+
 }
+
+.zoneShips {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+}
+
+.text-onZone {
+    margin-bottom: 15px;
+    margin-left: 15px;
+
+}
+
 
 @keyframes shake {
     0% {
@@ -132,7 +149,7 @@ th {
 
 .btn-ready {
     display: flex;
-    margin: 30px;
+    margin-top: 30px;
     flex-direction: column;
 }
 
@@ -146,6 +163,7 @@ th {
     cursor: pointer;
 
 }
+
 .ready:hover {
     border: 2px solid #0000c4;
     /*border-radius: 15px;*/
@@ -157,6 +175,7 @@ th {
     color: #ffffff;
 
 }
+
 .error-text-empty-field {
     margin: 10px 0;
     color: #e13935;
@@ -180,6 +199,7 @@ th {
     font-size: 20px;
     cursor: pointer;
 }
+
 .startGame:hover {
     border: 2px solid #3f7c26;
     height: 40px;
@@ -193,64 +213,124 @@ th {
 .active-fields {
     display: flex;
 }
+
 .text-ownerField {
     margin-top: 20px;
 
 }
+
 .activeField {
     display: flex;
     flex-direction: column;
 }
-.activeField td:hover {
-    /*border: 2px solid #4dd328;*/
-    outline: 2px solid #4dd328;
-}
 
-.clickedEmptyCell {
-    color: #9d9d9d;
+
+/*............crosses, dots........................ */
+
+
+.battlefield-miss {
     font-weight: bold;
     font-size: 24px;
+    background: radial-gradient(circle, #000000 4px, transparent 1px), #f2f4f8;
+    background-position: center;
+    background-repeat: no-repeat;
+
 }
 
-.woundedCell {
-    color: #f60a0a;
-    font-size: 30px;
+.battlefield-miss-auto {
+    font-weight: bold;
+    font-size: 24px;
+    background: radial-gradient(circle, #8a8a8a 3px, transparent 1px), #f1f1f1;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-.z::before,
-.z::after {
+
+.battlefield-cell-hit .z::before,
+.battlefield-cell-hit .z::after {
     content: "";
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 2px;          /* толщина линии */
-    height: 2px;        /* длина линии */
+    width: 150%;
+    height: 2px;
     background: red;
     transform-origin: center;
-    margin: 0;
-    inset: 0;
+    pointer-events: none;
 }
 
-.z::before {
+.battlefield-cell-hit .z::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.battlefield-cell-hit .z::after {
     transform: translate(-50%, -50%) rotate(-45deg);
-    top: -25%;
+}
+
+.battlefield-cell-done .z::before,
+.battlefield-cell-done .z::after {
+    content: "";
+    position: absolute;
     left: 50%;
-    height: 150%;
-}
-
-.z::after {
-    transform: translate(-50%, -50%) rotate(-45deg);
-    left: -25%;
     top: 50%;
     width: 150%;
+    height: 2px;
+    background: red;
+    transform-origin: center;
+    pointer-events: none;
+}
+
+.battlefield-cell-done .z::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.battlefield-cell-done .z::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.battlefield-cell-done {
+    outline: 2px solid red;
+}
+
+.battlefield-wait:disabled {
 
 }
-.z {
-    position: relative;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    display: inline-block;
 
+/*.battlefield-wait {*/
+/*    width: 100%;*/
+/*    height: 100%;*/
+/*    position: relative;*/
+/*    background: lightblue;*/
+/*}*/
+/*.battlefield-wait::after {*/
+/*    content: "";*/
+/*    position: absolute;*/
+/*    inset: 0; !* равен top:0; right:0; bottom:0; left:0 *!*/
+/*    background: rgba(0, 0, 0, 0.5); !* чёрная полупрозрачная маска *!*/
+/*    pointer-events: none; !* чтобы клики проходили сквозь маску *!*/
+/*    border-radius: inherit; !* если есть скругления *!*/
+/*}*/
+.battlefield-wait table {
+    color: #a6a6a6;
 }
+.battlefield-wait td {
+    color: #bebebe;
+    border: 1px solid #b2b4f3;
+}
+
+.battlefield-wait .battlefield-miss {
+    background: radial-gradient(circle, #7e7e7e 4px, transparent 1px), #f1f3fa;
+}
+.battlefield-wait .battlefield-cell-hit .z::before,
+.battlefield-wait  .battlefield-cell-hit .z::after {
+   background: #f87f7f;
+}
+
+
+.activeFieldPlayer1:not(.battlefield-wait)  td:hover:not(.battlefield-miss):not(.battlefield-miss-auto):not(.battlefield-cell-hit):not(.battlefield-cell-done) {
+    outline: 2px solid #4dd328;
+}
+.activeFieldPlayer2:not(.battlefield-wait)  td:hover:not(.battlefield-miss):not(.battlefield-miss-auto):not(.battlefield-cell-hit):not(.battlefield-cell-done) {
+    outline: 2px solid #4dd328;
+}
+
