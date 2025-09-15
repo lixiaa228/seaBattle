@@ -551,6 +551,8 @@ class StartGame {
 
         this.activeFieldPlayer1 = document.querySelector('.activeFieldPlayer1')
         this.activeFieldPlayer2 = document.querySelector('.activeFieldPlayer2')
+
+        this.turns = []
     }
 
     create2EmptyFields() {
@@ -569,7 +571,6 @@ class StartGame {
         const currentCell = hitCell.closest("td")
         const currentRow = currentCell.closest("tr");
 
-
         const prevRow = currentRow.previousElementSibling; //предыдущий ряд
         const nextRow = currentRow.nextElementSibling;
         const left = currentCell.cellIndex - 1
@@ -577,16 +578,12 @@ class StartGame {
 
         let arr = []
 
-        // prevRow.cells[left] ? arr.push(prevRow.cells[left]) : null;
         prevRow?.cells?.[left] && arr.push(prevRow.cells[left])
 
-        // nextRow.cells[left] ? arr.push(nextRow.cells[left]) : null;
         nextRow?.cells?.[left] && arr.push(nextRow.cells[left]);
 
-        // prevRow.cells[right] ? arr.push(prevRow.cells[right]) : null;
         prevRow?.cells?.[right] && arr.push(prevRow?.cells[right]);
 
-        // nextRow.cells[right] ? arr.push(nextRow.cells[right]) : null;
         nextRow?.cells?.[right] && arr.push(nextRow?.cells[right]);
 
 
@@ -594,14 +591,22 @@ class StartGame {
 
     }
 
-    isCellBusy(cell, arrShips) {
+    turns(eTargetCell) {
+        const x = eTargetCell.getAttribute("data-x");
+        const y = eTargetCell.getAttribute("data-y");
 
+    }
+
+    isCellBusy(cell, arrShips) {
         const dataX = cell.getAttribute("data-x")
         const dataY = cell.getAttribute("data-y")
         let ship
+        // console.log(arrShips)
+        // console.log(arrShips, "arrShips") obj with all ships and busy cells
 
         //.........check..is..cell..busy
-        this.elemCell = Object.fromEntries(
+        //...........obj..with..id.ship..and..busy..cell........
+        this.busyCell = Object.fromEntries(
             Object.entries(arrShips)
                 .map(([key, arr]) => [
                     key,
@@ -609,10 +614,11 @@ class StartGame {
                 ])
                 .filter(([key, arr]) => arr.length > 0)
         );
+        console.log(this.busyCell, "busyCell")
 
-        if (Object.keys(this.elemCell).length) {
-            const key = Object.keys(this.elemCell)[0];
-            console.log(key, "key")
+        if (Object.keys(this.busyCell).length) {
+            const key = Object.keys(this.busyCell)[0];
+
             if (key in arrShips) {
                 console.log("Нашли:", arrShips[key]);
                 const elems = arrShips[key];
@@ -620,7 +626,7 @@ class StartGame {
                     const child = elem.querySelector('.ship-box-draggable');
                     if (child) {
                         console.log("Прямой ребёнок:", child);
-
+//..............ship.........
                         ship = child
                     }
                 })
@@ -637,11 +643,11 @@ class StartGame {
             player.addEventListener('click', (e) => {
                 if (this.firstPlayerReady) {
 
-                    const child = this.isCellBusy(e.target, this.field1Ships)
+                    const ship = this.isCellBusy(e.target, this.field1Ships)
 
-                    if (Object.keys(this.elemCell).length) {
+                    if (Object.keys(this.busyCell).length) {
 
-                        child.getAttribute("data-length") === "1" ? player.classList.add('battlefield-cell-done') : player.classList.add('battlefield-cell-hit')
+                        ship.getAttribute("data-length") === "1" ? player.classList.add('battlefield-cell-done') : player.classList.add('battlefield-cell-hit')
 
                         const missAuto = this.fillAroundTheEdges(e.target)
                         missAuto.forEach(elem => {
@@ -655,11 +661,9 @@ class StartGame {
 
                         player.classList.add('battlefield-miss')
 
-
                         this.firstPlayerReady = false
                         this.secondPlayerReady = true
                     }
-
 
                 }
             })
@@ -669,11 +673,11 @@ class StartGame {
             player.addEventListener('click', (e) => {
                 if (this.secondPlayerReady) {
 
+                    const ship = this.isCellBusy(e.target, this.field2Ships)
+                    if (Object.keys(this.busyCell).length) {
 
-                    const child = this.isCellBusy(e.target, this.field2Ships)
-                    if (Object.keys(this.elemCell).length) {
 
-                        child.getAttribute("data-length") === "1" ? player.classList.add('battlefield-cell-done') : player.classList.add('battlefield-cell-hit')
+                        ship.getAttribute("data-length") === "1" ? player.classList.add('battlefield-cell-done') : player.classList.add('battlefield-cell-hit')
 
                         const missAuto = this.fillAroundTheEdges(e.target)
                         missAuto.forEach(elem => {
@@ -822,7 +826,6 @@ start.startGameButtonEvent()
 // firstPlayerReady.readyButtonEvent()
 // firstPlayerReady.startGame()
 //
-
 
 // const sdsd = this.grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY)
 // const allowPaste = this.allowPaste(dragged, sdsd)
@@ -1182,3 +1185,15 @@ start.startGameButtonEvent()
 //         break;
 //     }
 // }
+
+const settledBoats = {
+    'id123': [
+        '1A', '1Б'
+    ]
+}
+
+const turns = ['1Б', '2A']
+
+const isBoatDead = (boat, turns) => {
+
+}
