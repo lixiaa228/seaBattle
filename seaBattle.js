@@ -183,6 +183,12 @@ class Ship {
     }
 
     getData() {
+        for (let key in this.arrWithdata) {
+            this.arrWithdata[key] = this.arrWithdata[key].map(cell => ({
+                "data-x": cell.getAttribute("data-x"),
+                "data-y": cell.getAttribute("data-y")
+            }))
+        }
         return this.arrWithdata
     }
 
@@ -317,7 +323,6 @@ class Ship {
         })
     }
 
-//correct?.....................
     isAvailableCell(ship, dropZone, field) {
         if (!ship) return
         if (!dropZone) return
@@ -451,7 +456,6 @@ class Ship {
         }
     }
 
-    //remind that need also append dragged..............works right..mb((
     grabEdgeElems(dragged, dropZone, grabOffsetX, grabOffsetY, field) {
         if (!dragged) return;
 
@@ -495,7 +499,6 @@ class Ship {
         return targetElem;
     }
 
-//works right no
     canPlaceInCell(ship, dropZone, grabOffsetX, grabOffsetY) {
         const {lengthShip, position} = this.getElementData(ship, ["lengthShip", "position"]);
         const {x: rowX, y: rowY} = this.getElementData(dropZone, ["x", "y"]);
@@ -567,11 +570,9 @@ class StartGame {
     }
 
     fillAroundTheEdges(hitCell) {
-
         const currentCell = hitCell.closest("td")
         const currentRow = currentCell.closest("tr");
-
-        const prevRow = currentRow.previousElementSibling; //предыдущий ряд
+        const prevRow = currentRow.previousElementSibling;
         const nextRow = currentRow.nextElementSibling;
         const left = currentCell.cellIndex - 1
         const right = currentCell.cellIndex + 1
@@ -579,16 +580,11 @@ class StartGame {
         let arr = []
 
         prevRow?.cells?.[left] && arr.push(prevRow.cells[left])
-
         nextRow?.cells?.[left] && arr.push(nextRow.cells[left]);
-
         prevRow?.cells?.[right] && arr.push(prevRow?.cells[right]);
-
         nextRow?.cells?.[right] && arr.push(nextRow?.cells[right]);
 
-
         return arr.filter(el => el && el.tagName === "TD")
-
     }
 
     turns(eTargetCell) {
@@ -597,42 +593,42 @@ class StartGame {
 
     }
 
-    isCellBusy(cell, arrShips) {
-        const dataX = cell.getAttribute("data-x")
-        const dataY = cell.getAttribute("data-y")
-        let ship
-        // console.log(arrShips)
-        // console.log(arrShips, "arrShips") obj with all ships and busy cells
-
-        //.........check..is..cell..busy
-        //...........obj..with..id.ship..and..busy..cell........
-        this.busyCell = Object.fromEntries(
-            Object.entries(arrShips)
-                .map(([key, arr]) => [
-                    key,
-                    arr.filter(elem => elem.dataset.x === dataX && elem.dataset.y === dataY)
-                ])
-                .filter(([key, arr]) => arr.length > 0)
-        );
-        console.log(this.busyCell, "busyCell")
-
-        if (Object.keys(this.busyCell).length) {
-            const key = Object.keys(this.busyCell)[0];
-
-            if (key in arrShips) {
-                console.log("Нашли:", arrShips[key]);
-                const elems = arrShips[key];
-                elems.forEach(elem => {
-                    const child = elem.querySelector('.ship-box-draggable');
-                    if (child) {
-                        console.log("Прямой ребёнок:", child);
-//..............ship.........
-                        ship = child
-                    }
-                })
-            }
-        }
-        return ship
+     isCellBusy(cell, arrShips) {
+//         const dataX = cell.getAttribute("data-x")
+//         const dataY = cell.getAttribute("data-y")
+//         let ship
+//
+//         this.busyCell = Object.fromEntries(
+//             Object.entries(arrShips)
+//                 .map(([key, arr]) => [
+//                     key,
+//                     arr.filter(elem => elem.dataset.x === dataX && elem.dataset.y === dataY)
+//                 ])
+//                 .filter(([key, arr]) => arr.length > 0)
+//         );
+//         console.log(this.busyCell, "busyCell")
+//
+//         if (Object.keys(this.busyCell).length) {
+//             const key = Object.keys(this.busyCell)[0];
+//
+//             if (key in arrShips) {
+//                 console.log("Нашли:", arrShips[key]);
+//                 const elems = arrShips[key];
+//                 elems.forEach(elem => {
+//                     const child = elem.querySelector('.ship-box-draggable');
+//                     if (child) {
+//                         console.log("Прямой ребёнок:", child);
+// //..............ship.........
+//                         ship = child
+//                     }
+//                 })
+//             }
+//         }
+//         return ship
+         this.turns.push({
+             "data-x": cell.getAttribute("data-x"),
+             "data-y": cell.getAttribute("data-y"),
+         });
     }
 
     queuePlayers(playerTable1, playerTable2) {
@@ -646,7 +642,7 @@ class StartGame {
                     const ship = this.isCellBusy(e.target, this.field1Ships)
 
                     if (Object.keys(this.busyCell).length) {
-
+                        console.log(this.field1Ships, this.field2Ships)
                         ship.getAttribute("data-length") === "1" ? player.classList.add('battlefield-cell-done') : player.classList.add('battlefield-cell-hit')
 
                         const missAuto = this.fillAroundTheEdges(e.target)
@@ -793,7 +789,7 @@ class PrepareGame {
     startGameButtonEvent() {
         this.buttonStartGame.addEventListener("click", (e) => {
             const SHIPS_PER_PLAYER = 10;
-            const registeredShips = this.shipsFirstPlayer.getData()
+            const registeredShips = this.shipsSecondPlayer.getData()
 
             if (Object.keys(registeredShips).length === SHIPS_PER_PLAYER) {
                 this.field2Ships = {...registeredShips}
